@@ -1,0 +1,21 @@
+# Build outputs
+bin/
+obj/
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+
+# User-specific files
+*.user
+*.suo
+
+# SQL publish artifacts
+*.dacpac
+*.publish.xml
+*.publish.sql
+
+# Logs
+*.log
