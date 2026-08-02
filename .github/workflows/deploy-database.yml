@@ -53,6 +53,4 @@ jobs:
           ./sqlpackage/sqlpackage \
             /Action:Publish \
             /SourceFile:"bin/Release/stackoverflow2010-database.dacpac" \
-            /TargetServerName:"sqlserver-stack-test.database.windows.net" \
-            /TargetDatabaseName:"StackOverflow2010" \
-            /TargetAuthentication:"Active Directory Default"
+            /TargetConnectionString:"Server=tcp:sqlserver-stack-test.database.windows.net,1433;Initial Catalog=StackOverflow2010;Authentication=Active Directory Default;"
