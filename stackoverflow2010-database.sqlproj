@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Name>stackoverflow2010-database</Name>
     <ProjectGuid>{29A6F72E-ED8E-42CC-9FF9-9270B7CC0738}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql170DatabaseSchemaProvider</DSP>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
     <ModelCollation>1033, CI</ModelCollation>
   </PropertyGroup>
   <Target Name="BeforeBuild">
