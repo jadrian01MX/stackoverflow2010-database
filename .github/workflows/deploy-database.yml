@@ -38,6 +38,7 @@ jobs:
           client-id: e5118c48-bd63-45bc-8c9c-c97fe9fa6c29
           tenant-id: 6c560666-4010-488d-90f9-57963cc5a7bf
           subscription-id: 48ab377d-9bc4-4f07-9ac8-fa30fbaab28b
+          allow-no-subscriptions: true
 
 
       - name: Install SqlPackage
