@@ -9,6 +9,15 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  AZURE_CLIENT_ID: e5118c48-bd63-45bc-8c9c-c97fe9fa6c29
+  AZURE_TENANT_ID: 6c560666-4010-488d-90f9-57963cc5a7bf
+  AZURE_SUBSCRIPTION_ID: 48ab377d-9bc4-4f07-9ac8-fa30fbaab28b
+
+  SQL_SERVER: sqlserver-stack-test.database.windows.net
+  SQL_DATABASE: StackOverflow2010
+
+
 jobs:
   deploy:
     name: Deploy DACPAC
@@ -35,10 +44,9 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          client-id: e5118c48-bd63-45bc-8c9c-c97fe9fa6c29
-          tenant-id: 6c560666-4010-488d-90f9-57963cc5a7bf
-          subscription-id: 48ab377d-9bc4-4f07-9ac8-fa30fbaab28b
-          allow-no-subscriptions: true
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
 
       - name: Install SqlPackage
@@ -53,4 +61,4 @@ jobs:
           ./sqlpackage/sqlpackage \
             /Action:Publish \
             /SourceFile:"bin/Release/stackoverflow2010-database.dacpac" \
-            /TargetConnectionString:"Server=tcp:sqlserver-stack-test.database.windows.net,1433;Initial Catalog=StackOverflow2010;Authentication=Active Directory Default;"
+            /TargetConnectionString:"Server=tcp:${SQL_SERVER},1433;Initial Catalog=${SQL_DATABASE};Authentication=Active Directory Default;"
