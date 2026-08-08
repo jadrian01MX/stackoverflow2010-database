@@ -42,6 +42,23 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Verify Azure identity
+        run: |
+          az account show
+
+          az account get-access-token \
+            --resource https://storage.azure.com/ \
+            --query "{subscription:subscription, tenant:tenant, expiresOn:expiresOn}" \
+            --output table
+
+      - name: Test blob access
+        run: |
+          az storage blob show \
+            --auth-mode login \
+            --account-name "$DATA_STORAGE_ACCOUNT" \
+            --container-name "$DATA_CONTAINER" \
+            --name "$DATA_BACPAC_BLOB"
+
       - name: Download seed BACPAC
         run: |
           az storage blob download \
