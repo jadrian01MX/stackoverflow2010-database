@@ -44,42 +44,6 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Show Azure account
-        run: |
-          az account show
-          az account get-access-token \
-            --resource https://database.windows.net/ \
-            --query expiresOn \
-            --output tsv
-
-
-      - name: Install sqlcmd
-        run: |
-          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc |
-            gpg --dearmor --batch --yes |
-            sudo tee /usr/share/keyrings/microsoft-prod.gpg > /dev/null
-
-          curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/prod.list |
-            sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
-
-          sudo apt-get update
-          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
-
-          echo "/opt/mssql-tools18/bin" >> "$GITHUB_PATH"
-      - name: Test SQL authentication
-        run: |
-          TOKEN=$(az account get-access-token \
-            --resource https://database.windows.net/ \
-            --query accessToken \
-            --output tsv)
-
-          sqlcmd \
-            -S "tcp:${SQL_SERVER},1433" \
-            -d master \
-            --authentication-method ActiveDirectoryAccessToken \
-            -Q "SELECT SUSER_SNAME(), DB_NAME();" \
-            -G
-
       - name: Install SqlPackage
         run: |
           wget -q https://aka.ms/sqlpackage-linux -O sqlpackage.zip
