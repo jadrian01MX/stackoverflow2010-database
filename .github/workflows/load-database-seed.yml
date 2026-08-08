@@ -1,0 +1,95 @@
+name: Load Database Seed
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target GitHub environment. The target database must already exist and be empty.
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+      confirmation:
+        description: Type LOAD_DATASET to import the BACPAC.
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_CLIENT_ID: e5118c48-bd63-45bc-8c9c-c97fe9fa6c29
+  AZURE_TENANT_ID: 6c560666-4010-488d-90f9-57963cc5a7bf
+  AZURE_SUBSCRIPTION_ID: 48ab377d-9bc4-4f07-9ac8-fa30fbaab28b
+
+jobs:
+  import:
+    name: Import BACPAC into ${{ inputs.environment }}
+    if: ${{ inputs.confirmation == 'LOAD_DATASET' }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      DATA_STORAGE_ACCOUNT: ${{ vars.DATA_STORAGE_ACCOUNT }}
+      DATA_CONTAINER: ${{ vars.DATA_CONTAINER }}
+      DATA_BACPAC_BLOB: ${{ vars.DATA_BACPAC_BLOB }}
+      SQL_SERVER: ${{ vars.SQL_SERVER }}
+      SQL_DATABASE: ${{ vars.SQL_DATABASE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate configuration
+        run: |
+          test -n "$DATA_STORAGE_ACCOUNT"
+          test -n "$DATA_CONTAINER"
+          test -n "$DATA_BACPAC_BLOB"
+          test -n "$SQL_SERVER"
+          test -n "$SQL_DATABASE"
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download seed BACPAC
+        run: |
+          az storage blob download \
+            --auth-mode login \
+            --account-name "$DATA_STORAGE_ACCOUNT" \
+            --container-name "$DATA_CONTAINER" \
+            --name "$DATA_BACPAC_BLOB" \
+            --file "$RUNNER_TEMP/StackOverflow2010.bacpac" \
+            --no-progress
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Build SQL Project
+        run: dotnet build --configuration Release
+
+      - name: Install SqlPackage
+        run: |
+          wget -q https://aka.ms/sqlpackage-linux -O sqlpackage.zip
+          unzip -q sqlpackage.zip -d sqlpackage
+          chmod +x sqlpackage/sqlpackage
+
+      - name: Import BACPAC
+        run: |
+          ./sqlpackage/sqlpackage \
+            /Action:Import \
+            /SourceFile:"$RUNNER_TEMP/StackOverflow2010.bacpac" \
+            /TargetConnectionString:"Server=tcp:${SQL_SERVER},1433;Initial Catalog=${SQL_DATABASE};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
+
+      - name: Publish current DACPAC
+        run: |
+          ./sqlpackage/sqlpackage \
+            /Action:Publish \
+            /SourceFile:"bin/Release/stackoverflow2010-database.dacpac" \
+            /TargetConnectionString:"Server=tcp:${SQL_SERVER},1433;Initial Catalog=${SQL_DATABASE};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
