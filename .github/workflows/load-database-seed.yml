@@ -64,13 +64,13 @@ jobs:
 
           echo "Service principal: $DISPLAY_NAME"
           echo "Object ID: $PRINCIPAL_ID"
-      - name: Test blob access
+      - name: Test SQL authentication
         run: |
-          az storage blob show \
-            --auth-mode login \
-            --account-name "$DATA_STORAGE_ACCOUNT" \
-            --container-name "$DATA_CONTAINER" \
-            --name "$DATA_BACPAC_BLOB"
+          sqlcmd \
+            -S "tcp:${SQL_SERVER},1433" \
+            -d master \
+            -G \
+            -Q "SELECT SUSER_SNAME(), DB_NAME();"
 
       - name: Download seed BACPAC
         run: |
