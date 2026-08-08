@@ -2,14 +2,6 @@ name: Load Database Seed
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: Target environment
-        required: true
-        type: choice
-        options:
-          - test
-          - prod
 
 permissions:
   id-token: write
@@ -19,9 +11,12 @@ jobs:
   import:
     name: Import BACPAC
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
 
     env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
       DATA_STORAGE_ACCOUNT: ${{ vars.DATA_STORAGE_ACCOUNT }}
       DATA_CONTAINER: ${{ vars.DATA_CONTAINER }}
       DATA_BACPAC_BLOB: ${{ vars.DATA_BACPAC_BLOB }}

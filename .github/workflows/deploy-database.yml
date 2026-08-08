@@ -1,37 +1,37 @@
 name: Deploy Database Schema
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
-
 
 jobs:
   deploy:
     name: Deploy DACPAC
     runs-on: ubuntu-latest
 
-    steps:
+    env:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      SQL_SERVER: ${{ vars.SQL_SERVER }}
+      SQL_DATABASE: ${{ vars.SQL_DATABASE }}
 
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.x'
 
-
       - name: Build SQL Project
         run: |
           dotnet build \
             --configuration Release
-
 
       - name: Azure Login
         uses: azure/login@v2
@@ -40,17 +40,15 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-
       - name: Install SqlPackage
         run: |
           wget -q https://aka.ms/sqlpackage-linux -O sqlpackage.zip
           unzip -q sqlpackage.zip -d sqlpackage
           chmod +x sqlpackage/sqlpackage
 
-
       - name: Deploy DACPAC
         run: |
           ./sqlpackage/sqlpackage \
             /Action:Publish \
             /SourceFile:"bin/Release/stackoverflow2010-database.dacpac" \
-            /TargetConnectionString:"Server=tcp:${SQL_SERVER},1433;Initial Catalog=${SQL_DATABASE};Authentication=Active Directory Default;"
+            /TargetConnectionString:"Server=tcp:${SQL_SERVER},1433;Initial Catalog=${SQL_DATABASE};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
