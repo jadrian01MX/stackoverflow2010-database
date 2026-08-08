@@ -66,14 +66,19 @@ jobs:
           sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
 
           echo "/opt/mssql-tools18/bin" >> "$GITHUB_PATH"
-
       - name: Test SQL authentication
         run: |
+          TOKEN=$(az account get-access-token \
+            --resource https://database.windows.net/ \
+            --query accessToken \
+            --output tsv)
+
           sqlcmd \
             -S "tcp:${SQL_SERVER},1433" \
             -d master \
-            -G \
-            -Q "SELECT SUSER_SNAME(), DB_NAME();"
+            --authentication-method ActiveDirectoryAccessToken \
+            -Q "SELECT SUSER_SNAME(), DB_NAME();" \
+            -G
 
       - name: Install SqlPackage
         run: |
