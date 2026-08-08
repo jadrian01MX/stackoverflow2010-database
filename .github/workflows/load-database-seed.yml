@@ -1,7 +1,9 @@
 name: Load Database Seed
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   id-token: write
@@ -42,42 +44,13 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Verify Azure identity
+      - name: Show Azure account
         run: |
           az account show
-
           az account get-access-token \
-            --resource https://storage.azure.com/ \
-            --query "{subscription:subscription, tenant:tenant, expiresOn:expiresOn}" \
-            --output table
-      - name: Identify GitHub Actions service principal
-        run: |
-          PRINCIPAL_ID=$(az ad sp show \
-            --id "$AZURE_CLIENT_ID" \
-            --query id \
-            --output tsv)
-
-          DISPLAY_NAME=$(az ad sp show \
-            --id "$AZURE_CLIENT_ID" \
-            --query displayName \
-            --output tsv)
-
-          echo "Service principal: $DISPLAY_NAME"
-          echo "Object ID: $PRINCIPAL_ID"
-      - name: Install sqlcmd
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-            sudo apt-get update
-            sudo apt-get install -y mssql-tools18 unixodbc-dev
-      - name: Test SQL authentication
-        run: |
-          sqlcmd \
-            -S "tcp:${SQL_SERVER},1433" \
-            -d master \
-            -G \
-            -Q "SELECT SUSER_SNAME(), DB_NAME();"
+            --resource https://database.windows.net/ \
+            --query expiresOn \
+            --output tsv
 
       - name: Download seed BACPAC
         run: |
@@ -88,6 +61,27 @@ jobs:
             --name "$DATA_BACPAC_BLOB" \
             --file "$RUNNER_TEMP/StackOverflow2010.bacpac" \
             --no-progress
+
+      - name: Install sqlcmd
+        run: |
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | \
+            sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+
+          curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/prod.list | \
+            sudo tee /etc/apt/sources.list.d/mssql-release.list
+
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+
+          echo "/opt/mssql-tools18/bin" >> "$GITHUB_PATH"
+
+      - name: Test SQL authentication
+        run: |
+          sqlcmd \
+            -S "tcp:${SQL_SERVER},1433" \
+            -d master \
+            -G \
+            -Q "SELECT SUSER_SNAME(), DB_NAME();"
 
       - name: Install SqlPackage
         run: |
