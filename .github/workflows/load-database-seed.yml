@@ -52,23 +52,15 @@ jobs:
             --query expiresOn \
             --output tsv
 
-      - name: Download seed BACPAC
-        run: |
-          az storage blob download \
-            --auth-mode login \
-            --account-name "$DATA_STORAGE_ACCOUNT" \
-            --container-name "$DATA_CONTAINER" \
-            --name "$DATA_BACPAC_BLOB" \
-            --file "$RUNNER_TEMP/StackOverflow2010.bacpac" \
-            --no-progress
 
       - name: Install sqlcmd
         run: |
-          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | \
-            sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc |
+            gpg --dearmor --batch --yes |
+            sudo tee /usr/share/keyrings/microsoft-prod.gpg > /dev/null
 
-          curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/prod.list | \
-            sudo tee /etc/apt/sources.list.d/mssql-release.list
+          curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/prod.list |
+            sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
 
           sudo apt-get update
           sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
@@ -88,7 +80,15 @@ jobs:
           wget -q https://aka.ms/sqlpackage-linux -O sqlpackage.zip
           unzip -q sqlpackage.zip -d sqlpackage
           chmod +x sqlpackage/sqlpackage
-
+      - name: Download seed BACPAC
+        run: |
+          az storage blob download \
+            --auth-mode login \
+            --account-name "$DATA_STORAGE_ACCOUNT" \
+            --container-name "$DATA_CONTAINER" \
+            --name "$DATA_BACPAC_BLOB" \
+            --file "$RUNNER_TEMP/StackOverflow2010.bacpac" \
+            --no-progress
       - name: Import BACPAC
         run: |
           ./sqlpackage/sqlpackage \
