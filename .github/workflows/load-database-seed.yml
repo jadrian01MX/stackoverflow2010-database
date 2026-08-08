@@ -50,7 +50,20 @@ jobs:
             --resource https://storage.azure.com/ \
             --query "{subscription:subscription, tenant:tenant, expiresOn:expiresOn}" \
             --output table
+      - name: Identify GitHub Actions service principal
+        run: |
+          PRINCIPAL_ID=$(az ad sp show \
+            --id "$AZURE_CLIENT_ID" \
+            --query id \
+            --output tsv)
 
+          DISPLAY_NAME=$(az ad sp show \
+            --id "$AZURE_CLIENT_ID" \
+            --query displayName \
+            --output tsv)
+
+          echo "Service principal: $DISPLAY_NAME"
+          echo "Object ID: $PRINCIPAL_ID"
       - name: Test blob access
         run: |
           az storage blob show \
