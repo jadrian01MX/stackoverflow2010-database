@@ -3,26 +3,24 @@ name: Load Database Seed
 on:
   workflow_dispatch:
     inputs:
-      confirmation:
-        description: Type LOAD_DATASET to import the BACPAC.
+      environment:
+        description: Target environment
         required: true
-        type: string
+        type: choice
+        options:
+          - test
+          - prod
 
 permissions:
   id-token: write
   contents: read
 
-env:
-  AZURE_CLIENT_ID: e5118c48-bd63-45bc-8c9c-c97fe9fa6c29
-  AZURE_TENANT_ID: 6c560666-4010-488d-90f9-57963cc5a7bf
-  AZURE_SUBSCRIPTION_ID: 48ab377d-9bc4-4f07-9ac8-fa30fbaab28b
-
 jobs:
   import:
-    name: Import BACPAC into test
-    if: ${{ inputs.confirmation == 'LOAD_DATASET' }}
+    name: Import BACPAC
     runs-on: ubuntu-latest
-    environment: test
+    environment: ${{ inputs.environment }}
+
     env:
       DATA_STORAGE_ACCOUNT: ${{ vars.DATA_STORAGE_ACCOUNT }}
       DATA_CONTAINER: ${{ vars.DATA_CONTAINER }}
@@ -59,14 +57,6 @@ jobs:
             --file "$RUNNER_TEMP/StackOverflow2010.bacpac" \
             --no-progress
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Build SQL Project
-        run: dotnet build --configuration Release
-
       - name: Install SqlPackage
         run: |
           wget -q https://aka.ms/sqlpackage-linux -O sqlpackage.zip
@@ -78,11 +68,4 @@ jobs:
           ./sqlpackage/sqlpackage \
             /Action:Import \
             /SourceFile:"$RUNNER_TEMP/StackOverflow2010.bacpac" \
-            /TargetConnectionString:"Server=tcp:${SQL_SERVER},1433;Initial Catalog=${SQL_DATABASE};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"
-
-      - name: Publish current DACPAC
-        run: |
-          ./sqlpackage/sqlpackage \
-            /Action:Publish \
-            /SourceFile:"bin/Release/stackoverflow2010-database.dacpac" \
             /TargetConnectionString:"Server=tcp:${SQL_SERVER},1433;Initial Catalog=${SQL_DATABASE};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;Connection Timeout=60;"

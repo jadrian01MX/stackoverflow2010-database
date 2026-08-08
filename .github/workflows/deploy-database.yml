@@ -9,14 +9,6 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  AZURE_CLIENT_ID: e5118c48-bd63-45bc-8c9c-c97fe9fa6c29
-  AZURE_TENANT_ID: 6c560666-4010-488d-90f9-57963cc5a7bf
-  AZURE_SUBSCRIPTION_ID: 48ab377d-9bc4-4f07-9ac8-fa30fbaab28b
-
-  SQL_SERVER: sqlserver-stack-test.database.windows.net
-  SQL_DATABASE: StackOverflow2010
-
 
 jobs:
   deploy:
