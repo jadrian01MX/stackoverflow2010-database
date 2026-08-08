@@ -3,13 +3,6 @@ name: Load Database Seed
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: Target GitHub environment. The target database must already exist and be empty.
-        required: true
-        type: choice
-        options:
-          - dev
-          - test
       confirmation:
         description: Type LOAD_DATASET to import the BACPAC.
         required: true
@@ -26,10 +19,10 @@ env:
 
 jobs:
   import:
-    name: Import BACPAC into ${{ inputs.environment }}
+    name: Import BACPAC into test
     if: ${{ inputs.confirmation == 'LOAD_DATASET' }}
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: test
     env:
       DATA_STORAGE_ACCOUNT: ${{ vars.DATA_STORAGE_ACCOUNT }}
       DATA_CONTAINER: ${{ vars.DATA_CONTAINER }}
