@@ -1,22 +1,6 @@
 IF NOT EXISTS
 (
     SELECT 1
-    FROM sys.change_tracking_databases
-    WHERE database_id = DB_ID()
-)
-BEGIN
-    ALTER DATABASE CURRENT
-    SET CHANGE_TRACKING = ON
-    (
-        CHANGE_RETENTION = 7 DAYS,
-        AUTO_CLEANUP = ON
-    );
-END
-GO
-
-IF NOT EXISTS
-(
-    SELECT 1
     FROM sys.change_tracking_tables
     WHERE object_id = OBJECT_ID(N'dbo.Posts')
 )
